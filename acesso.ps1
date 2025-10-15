@@ -95,23 +95,28 @@ try {
             } | ConvertTo-Json
 
             try {
-                if ($supabaseUrl -ne "https://SEU_PROJETO.supabase.co" -and $supabaseKey -ne "SUA_ANON_KEY_AQUI") {
-                    $headers = @{
-                        "apikey" = $supabaseKey
-                        "Authorization" = "Bearer $supabaseKey"
-                        "Content-Type" = "application/json"
-                        "Prefer" = "return=minimal"
-                    }
-
-                    $endpoint = "$supabaseUrl/rest/v1/$supabaseTable"
-
-                    Invoke-RestMethod -Uri $endpoint -Method Post -Headers $headers -Body $dados -UseBasicParsing
-                    Write-Host "[+] Informações enviadas para o Supabase com sucesso!" -ForegroundColor Green
-                } else {
-                    Write-Host "[!] Supabase não configurado - pulando envio" -ForegroundColor Yellow
+                $headers = @{
+                    "apikey" = $supabaseKey
+                    "Authorization" = "Bearer $supabaseKey"
+                    "Content-Type" = "application/json"
+                    "Prefer" = "return=minimal"
                 }
+
+                $endpoint = "$supabaseUrl/rest/v1/$supabaseTable"
+
+                Write-Host "[DEBUG] Endpoint: $endpoint" -ForegroundColor Cyan
+                Write-Host "[DEBUG] Dados: $dados" -ForegroundColor Cyan
+
+                $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $headers -Body $dados -UseBasicParsing
+                Write-Host "[+] Informações enviadas para o Supabase com sucesso!" -ForegroundColor Green
             } catch {
                 Write-Host "[!] Erro ao enviar para Supabase: $_" -ForegroundColor Red
+                Write-Host "[!] Detalhes: $($_.Exception.Message)" -ForegroundColor Red
+                if ($_.Exception.Response) {
+                    $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                    $responseBody = $reader.ReadToEnd()
+                    Write-Host "[!] Resposta: $responseBody" -ForegroundColor Red
+                }
             }
         }
 
