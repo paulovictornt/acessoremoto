@@ -120,14 +120,12 @@ Data/Hora: $timestamp
                 Start-Sleep -Seconds 1
             }
 
-            # Copia para área de transferência
-            try {
-                $mensagem | Set-Clipboard
-                Write-Host "[+] Informações copiadas para área de transferência!" -ForegroundColor Green
-                Write-Host "[*] Use Ctrl+V para colar as informações." -ForegroundColor Yellow
-            } catch {
-                Write-Host "[!] Erro ao copiar para área de transferência: $_" -ForegroundColor Red
-            }
+            # Copia para área de transferência usando clip.exe
+            Write-Host ""
+            $mensagem | clip.exe
+            Write-Host "[+] ✓ Informações COPIADAS para área de transferência!" -ForegroundColor Green -BackgroundColor Black
+            Write-Host "[+] ✓ Aperte Ctrl+V para colar!" -ForegroundColor Green
+            Write-Host ""
         }
 
         # Configura para iniciar com o Windows
