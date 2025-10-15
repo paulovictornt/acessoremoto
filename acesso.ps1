@@ -65,26 +65,53 @@ try {
         Write-Host "[+] Senha configurada!" -ForegroundColor Green
         Write-Host ""
 
-        # Obtém o ID do AnyDesk
-        Write-Host "[*] Obtendo ID do AnyDesk..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 5
+        # Obtém o ID do AnyDesk com automação
+        Write-Host "[*] Abrindo AnyDesk para copiar o ID..." -ForegroundColor Yellow
 
-        # Tenta múltiplas vezes obter o ID
-        $anydeskId = ""
-        for ($tentativa = 1; $tentativa -le 5; $tentativa++) {
-            $anydeskId = & $anydeskExe --get-id 2>$null
-            if ($anydeskId) {
-                break
-            }
-            Write-Host "[*] Tentativa $tentativa/5..." -ForegroundColor Yellow
+        # Inicia o AnyDesk
+        Start-Process -FilePath $anydeskExe
+        Start-Sleep -Seconds 3
+
+        # Carrega assembly para automação
+        Add-Type -AssemblyName System.Windows.Forms
+
+        # Traz a janela do AnyDesk para frente e copia o ID
+        Write-Host "[*] Copiando ID do AnyDesk..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+
+        # Simula Ctrl+C para copiar o ID (o AnyDesk copia o ID quando você aperta Ctrl+C na janela principal)
+        [System.Windows.Forms.SendKeys]::SendWait("^c")
+        Start-Sleep -Milliseconds 500
+
+        # Pega o ID da área de transferência
+        $anydeskId = [System.Windows.Forms.Clipboard]::GetText()
+
+        # Se não conseguiu, tenta método alternativo
+        if (-not $anydeskId -or $anydeskId.Length -lt 5) {
+            Write-Host "[*] Tentando método alternativo..." -ForegroundColor Yellow
             Start-Sleep -Seconds 2
+
+            # Tenta novamente com delay maior
+            [System.Windows.Forms.SendKeys]::SendWait("^c")
+            Start-Sleep -Seconds 1
+            $anydeskId = [System.Windows.Forms.Clipboard]::GetText()
         }
+
+        # Se ainda não conseguiu, tenta comando direto
+        if (-not $anydeskId -or $anydeskId.Length -lt 5) {
+            Write-Host "[*] Tentando obter via comando..." -ForegroundColor Yellow
+            $anydeskId = & $anydeskExe --get-id 2>$null
+        }
+
+        # Fecha o AnyDesk GUI (mas deixa serviço rodando)
+        Get-Process | Where-Object {$_.ProcessName -eq "AnyDesk"} | Where-Object {$_.MainWindowTitle -ne ""} | Stop-Process -Force -ErrorAction SilentlyContinue
 
         if (-not $anydeskId) {
             $anydeskId = "ID_NAO_OBTIDO"
             Write-Host "[!] Não foi possível obter o ID automaticamente" -ForegroundColor Yellow
-            Write-Host "[*] Abra o AnyDesk manualmente para ver o ID" -ForegroundColor Yellow
         } else {
+            # Limpa o ID (remove espaços e quebras de linha)
+            $anydeskId = $anydeskId.Trim()
             Write-Host "[+] ID do AnyDesk: $anydeskId" -ForegroundColor Green -BackgroundColor Black
         }
 
