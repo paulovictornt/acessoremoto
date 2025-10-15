@@ -25,10 +25,6 @@ $anydeskPath = "$env:TEMP\AnyDesk.exe"
 $installPath = "$env:ProgramFiles\AnyDesk"
 $senha = "1a2b3c4d5e6f@"
 
-# Configurações Supabase
-$supabaseUrl = "https://rzuununlbsjhqjcreoxn.supabase.co"
-$supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6dXVudW5sYnNqaHFqY3Jlb3huIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTk3NjksImV4cCI6MjA3NjAzNTc2OX0.ISpWXeirJ1YKE91rhSWl3srsi9uBM-Td0t4eFIhVV-E"
-$supabaseTable = "acessos_remotos"
 
 try {
     # Baixa o AnyDesk
@@ -78,45 +74,59 @@ try {
         if ($anydeskId) {
             Write-Host "[+] ID do AnyDesk: $anydeskId" -ForegroundColor Green -BackgroundColor Black
 
-            # Envia informações para o Supabase
-            Write-Host "[*] Enviando informações para o Supabase..." -ForegroundColor Yellow
-
             $computerName = $env:COMPUTERNAME
             $userName = $env:USERNAME
-            $timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss"
+            $timestamp = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 
-            # Monta o JSON para enviar ao Supabase
-            $dados = @{
-                computador = $computerName
-                usuario = $userName
-                anydesk_id = $anydeskId
-                senha = $senha
-                data_instalacao = $timestamp
-            } | ConvertTo-Json
+            # Monta a mensagem para exibir e copiar
+            $mensagem = @"
+========================================
+   INFORMAÇÕES DE ACESSO REMOTO
+========================================
 
+Computador: $computerName
+Usuário: $userName
+ID AnyDesk: $anydeskId
+Senha: $senha
+Data/Hora: $timestamp
+
+========================================
+"@
+
+            # Exibe as informações na tela
+            Write-Host ""
+            Write-Host "========================================" -ForegroundColor Cyan
+            Write-Host "   INFORMAÇÕES DE ACESSO REMOTO" -ForegroundColor Cyan
+            Write-Host "========================================" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "Computador: " -NoNewline -ForegroundColor Yellow
+            Write-Host $computerName -ForegroundColor White
+            Write-Host "Usuário: " -NoNewline -ForegroundColor Yellow
+            Write-Host $userName -ForegroundColor White
+            Write-Host "ID AnyDesk: " -NoNewline -ForegroundColor Yellow
+            Write-Host $anydeskId -ForegroundColor Green
+            Write-Host "Senha: " -NoNewline -ForegroundColor Yellow
+            Write-Host $senha -ForegroundColor Green
+            Write-Host "Data/Hora: " -NoNewline -ForegroundColor Yellow
+            Write-Host $timestamp -ForegroundColor White
+            Write-Host ""
+            Write-Host "========================================" -ForegroundColor Cyan
+            Write-Host ""
+
+            # Aguarda 10 segundos
+            Write-Host "[*] Copiando informações para área de transferência em 10 segundos..." -ForegroundColor Yellow
+            for ($i = 10; $i -gt 0; $i--) {
+                Write-Host "    $i..." -ForegroundColor Cyan
+                Start-Sleep -Seconds 1
+            }
+
+            # Copia para área de transferência
             try {
-                $headers = @{
-                    "apikey" = $supabaseKey
-                    "Authorization" = "Bearer $supabaseKey"
-                    "Content-Type" = "application/json"
-                    "Prefer" = "return=minimal"
-                }
-
-                $endpoint = "$supabaseUrl/rest/v1/$supabaseTable"
-
-                Write-Host "[DEBUG] Endpoint: $endpoint" -ForegroundColor Cyan
-                Write-Host "[DEBUG] Dados: $dados" -ForegroundColor Cyan
-
-                $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $headers -Body $dados -UseBasicParsing
-                Write-Host "[+] Informações enviadas para o Supabase com sucesso!" -ForegroundColor Green
+                $mensagem | Set-Clipboard
+                Write-Host "[+] Informações copiadas para área de transferência!" -ForegroundColor Green
+                Write-Host "[*] Use Ctrl+V para colar as informações." -ForegroundColor Yellow
             } catch {
-                Write-Host "[!] Erro ao enviar para Supabase: $_" -ForegroundColor Red
-                Write-Host "[!] Detalhes: $($_.Exception.Message)" -ForegroundColor Red
-                if ($_.Exception.Response) {
-                    $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                    $responseBody = $reader.ReadToEnd()
-                    Write-Host "[!] Resposta: $responseBody" -ForegroundColor Red
-                }
+                Write-Host "[!] Erro ao copiar para área de transferência: $_" -ForegroundColor Red
             }
         }
 
