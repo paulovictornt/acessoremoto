@@ -67,19 +67,33 @@ try {
 
         # Obtém o ID do AnyDesk
         Write-Host "[*] Obtendo ID do AnyDesk..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
 
-        $anydeskId = & $anydeskExe --get-id 2>$null
+        # Tenta múltiplas vezes obter o ID
+        $anydeskId = ""
+        for ($tentativa = 1; $tentativa -le 5; $tentativa++) {
+            $anydeskId = & $anydeskExe --get-id 2>$null
+            if ($anydeskId) {
+                break
+            }
+            Write-Host "[*] Tentativa $tentativa/5..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 2
+        }
 
-        if ($anydeskId) {
+        if (-not $anydeskId) {
+            $anydeskId = "ID_NAO_OBTIDO"
+            Write-Host "[!] Não foi possível obter o ID automaticamente" -ForegroundColor Yellow
+            Write-Host "[*] Abra o AnyDesk manualmente para ver o ID" -ForegroundColor Yellow
+        } else {
             Write-Host "[+] ID do AnyDesk: $anydeskId" -ForegroundColor Green -BackgroundColor Black
+        }
 
-            $computerName = $env:COMPUTERNAME
-            $userName = $env:USERNAME
-            $timestamp = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
+        $computerName = $env:COMPUTERNAME
+        $userName = $env:USERNAME
+        $timestamp = Get-Date -Format "dd/MM/yyyy HH:mm:ss"
 
-            # Monta a mensagem para exibir e copiar
-            $mensagem = @"
+        # Monta a mensagem para exibir e copiar
+        $mensagem = @"
 ========================================
    INFORMAÇÕES DE ACESSO REMOTO
 ========================================
@@ -93,39 +107,39 @@ Data/Hora: $timestamp
 ========================================
 "@
 
-            # Exibe as informações na tela
-            Write-Host ""
-            Write-Host "========================================" -ForegroundColor Cyan
-            Write-Host "   INFORMAÇÕES DE ACESSO REMOTO" -ForegroundColor Cyan
-            Write-Host "========================================" -ForegroundColor Cyan
-            Write-Host ""
-            Write-Host "Computador: " -NoNewline -ForegroundColor Yellow
-            Write-Host $computerName -ForegroundColor White
-            Write-Host "Usuário: " -NoNewline -ForegroundColor Yellow
-            Write-Host $userName -ForegroundColor White
-            Write-Host "ID AnyDesk: " -NoNewline -ForegroundColor Yellow
-            Write-Host $anydeskId -ForegroundColor Green
-            Write-Host "Senha: " -NoNewline -ForegroundColor Yellow
-            Write-Host $senha -ForegroundColor Green
-            Write-Host "Data/Hora: " -NoNewline -ForegroundColor Yellow
-            Write-Host $timestamp -ForegroundColor White
-            Write-Host ""
-            Write-Host "========================================" -ForegroundColor Cyan
-            Write-Host ""
+        # Exibe as informações na tela
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Cyan
+        Write-Host "   INFORMAÇÕES DE ACESSO REMOTO" -ForegroundColor Cyan
+        Write-Host "========================================" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Computador: " -NoNewline -ForegroundColor Yellow
+        Write-Host $computerName -ForegroundColor White
+        Write-Host "Usuário: " -NoNewline -ForegroundColor Yellow
+        Write-Host $userName -ForegroundColor White
+        Write-Host "ID AnyDesk: " -NoNewline -ForegroundColor Yellow
+        Write-Host $anydeskId -ForegroundColor Green
+        Write-Host "Senha: " -NoNewline -ForegroundColor Yellow
+        Write-Host $senha -ForegroundColor Green
+        Write-Host "Data/Hora: " -NoNewline -ForegroundColor Yellow
+        Write-Host $timestamp -ForegroundColor White
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Cyan
+        Write-Host ""
 
-            # Aguarda 10 segundos
-            Write-Host "[*] Copiando informações para área de transferência em 10 segundos..." -ForegroundColor Yellow
-            for ($i = 10; $i -gt 0; $i--) {
-                Write-Host "    $i..." -ForegroundColor Cyan
-                Start-Sleep -Seconds 1
-            }
+        # Copia IMEDIATAMENTE para área de transferência
+        Write-Host "[*] Copiando para área de transferência..." -ForegroundColor Yellow
+        $mensagem | clip.exe
+        Write-Host ""
+        Write-Host "[+] ✓✓✓ INFORMAÇÕES COPIADAS! ✓✓✓" -ForegroundColor Green -BackgroundColor Black
+        Write-Host "[+] ✓✓✓ USE CTRL+V PARA COLAR! ✓✓✓" -ForegroundColor Green -BackgroundColor Black
+        Write-Host ""
 
-            # Copia para área de transferência usando clip.exe
-            Write-Host ""
-            $mensagem | clip.exe
-            Write-Host "[+] ✓ Informações COPIADAS para área de transferência!" -ForegroundColor Green -BackgroundColor Black
-            Write-Host "[+] ✓ Aperte Ctrl+V para colar!" -ForegroundColor Green
-            Write-Host ""
+        # Aguarda 10 segundos antes de fechar
+        Write-Host "[*] Janela vai fechar em 10 segundos..." -ForegroundColor Yellow
+        for ($i = 10; $i -gt 0; $i--) {
+            Write-Host "    $i..." -ForegroundColor Cyan
+            Start-Sleep -Seconds 1
         }
 
         # Configura para iniciar com o Windows
